@@ -21,4 +21,4 @@ server:
 api:
   security:
     token:
-      secret-key: ${JWT_SECRET:3x1Tu515tH3b3st}
+      secret: ${JWT_SECRET:3x1Tu515tH3b3st}
