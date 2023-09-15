@@ -36,7 +36,7 @@ public class SecurityConfig {
         try {
             return authenticationConfiguration.getAuthenticationManager();
         } catch (Exception e) {
-            throw new AuthException(AuthMessages.ERROR_AUTHENTICATION_MANAGER);
+            throw new AuthException(AuthMessages.AUTHENTICATION_MANAGER_ERROR);
         }
     }
 
