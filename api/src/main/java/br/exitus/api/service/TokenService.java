@@ -1,6 +1,7 @@
 package br.exitus.api.service;
 
 import br.exitus.api.constant.message.AuthMessages;
+import br.exitus.api.constant.variable.TokenServiceVAR;
 import br.exitus.api.infra.exception.AuthException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -16,7 +17,7 @@ import java.time.ZoneOffset;
 
 @Service
 public class TokenService {
-    @Value("${api.security.token.secret}")
+    @Value(TokenServiceVAR.SECRET)
     private String secret;
 
     public String generateToken (Authentication authentication) {
@@ -25,7 +26,7 @@ public class TokenService {
             Algorithm algorithm = Algorithm.HMAC256(secret);
 
             return JWT.create()
-                    .withIssuer("ExitusAPI")
+                    .withIssuer(TokenServiceVAR.ISSUER)
                     .withSubject(authentication.getName())
                     .withExpiresAt(getExpirationDate())
                     .sign(algorithm);
@@ -40,7 +41,7 @@ public class TokenService {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
-                    .withIssuer("ExitusAPI")
+                    .withIssuer(TokenServiceVAR.ISSUER)
                     .build()
                     .verify(token)
                     .getSubject();
@@ -52,6 +53,6 @@ public class TokenService {
     }
 
     private Instant getExpirationDate() {
-        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
+        return LocalDateTime.now().plusHours(TokenServiceVAR.EXPIRATION_TIME).toInstant(ZoneOffset.of("-03:00"));
     }
 }

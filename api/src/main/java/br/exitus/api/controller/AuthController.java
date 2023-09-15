@@ -1,5 +1,6 @@
 package br.exitus.api.controller;
 
+import br.exitus.api.constant.variable.RouteVAR;
 import br.exitus.api.domain.user.User;
 import br.exitus.api.domain.user.dto.LoginRequestDTO;
 import br.exitus.api.domain.user.dto.LoginResponseDTO;
@@ -9,6 +10,7 @@ import br.exitus.api.domain.user.validation.UserValidationService;
 import br.exitus.api.repository.RoleRepository;
 import br.exitus.api.repository.UserRepository;
 import br.exitus.api.service.TokenService;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +26,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping(RouteVAR.AUTH)
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -52,7 +54,7 @@ public class AuthController {
     }
 
 
-    @PostMapping("/login")
+    @PostMapping(RouteVAR.LOGIN)
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO dto) {
 
         var token = new UsernamePasswordAuthenticationToken(dto.email(), dto.password());
@@ -65,7 +67,8 @@ public class AuthController {
 
     }
 
-    @PostMapping("/signup")
+    @Transactional
+    @PostMapping(RouteVAR.SIGNUP)
     public ResponseEntity<SignupResponseDTO> signup(@RequestBody @Valid SignupRequestDTO dto, UriComponentsBuilder uriComponentsBuilder) {
 
         userValidationService.validate(dto);

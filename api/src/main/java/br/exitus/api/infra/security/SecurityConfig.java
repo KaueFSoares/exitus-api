@@ -1,6 +1,7 @@
 package br.exitus.api.infra.security;
 
 import br.exitus.api.constant.message.AuthMessages;
+import br.exitus.api.constant.variable.RouteVAR;
 import br.exitus.api.infra.exception.AuthException;
 import br.exitus.api.infra.filter.ExceptionHandlerFilter;
 import br.exitus.api.infra.filter.PerformanceFilter;
@@ -40,7 +41,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers(RouteVAR.FULL_LOGIN).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
