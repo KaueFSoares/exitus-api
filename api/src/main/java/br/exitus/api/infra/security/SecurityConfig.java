@@ -2,6 +2,10 @@ package br.exitus.api.infra.security;
 
 import br.exitus.api.constant.message.AuthMessages;
 import br.exitus.api.infra.exception.AuthException;
+import br.exitus.api.infra.filter.ExceptionHandlerFilter;
+import br.exitus.api.infra.filter.PerformanceFilter;
+import br.exitus.api.infra.filter.SecurityFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,21 +17,35 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final SecurityFilter securityFilter;
+    private final ExceptionHandlerFilter exceptionHandlerFilter;
+    private final PerformanceFilter performanceFilter;
+
+    @Autowired
+    public SecurityConfig(SecurityFilter securityFilter, ExceptionHandlerFilter exceptionHandlerFilter, PerformanceFilter performanceFilter) {
+        this.securityFilter = securityFilter;
+        this.exceptionHandlerFilter = exceptionHandlerFilter;
+        this.performanceFilter = performanceFilter;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests( authorize -> authorize
+                .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/signup").permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(exceptionHandlerFilter, SecurityFilter.class)
+                .addFilterBefore(performanceFilter, ExceptionHandlerFilter.class)
                 .build();
     }
 
