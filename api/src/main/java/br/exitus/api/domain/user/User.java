@@ -1,19 +1,16 @@
 package br.exitus.api.domain.user;
 
+import br.exitus.api.domain.earlyexit.EarlyExit;
+import br.exitus.api.domain.register.Register;
 import br.exitus.api.domain.role.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
@@ -22,16 +19,37 @@ import java.util.stream.Collectors;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(of = "id")
+@ToString(onlyExplicitlyIncluded = true)
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Size(max = 36)
+    @ToString.Include
     private String id;
 
+    @Column(unique = true)
+    @ToString.Include
     private String email;
 
     private String password;
+
+    private Boolean active = true;
+
+    private String name;
+
+    @Column(unique = true)
+    @Size(max = 36)
+    @ToString.Include
+    private String fingerprint = UUID.randomUUID().toString();
+
+    private String enrollment;
+
+    private LocalDate birthDate;
+
+    @Enumerated(EnumType.STRING)
+    private Shift shift;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -39,6 +57,22 @@ public class User implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
     private Set<Role> roles;
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "guardian_guarded",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "guarded_id", referencedColumnName = "id"))
+    private Set<User> guardeds = new HashSet<>();
+
+    @ManyToMany(mappedBy = "guardeds", cascade = CascadeType.ALL)
+    private Set<User> guardians = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<Register> registers = new HashSet<>();
+
+    @OneToMany(mappedBy = "guarded", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<EarlyExit> earlyExits = new HashSet<>();
 
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
@@ -74,6 +108,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.active;
     }
 }
