@@ -9,10 +9,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         ddl-auto: update
 
     generate-ddl: true
+    open-in-view: false
 
 server:
   error:
