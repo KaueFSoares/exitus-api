@@ -3,6 +3,7 @@ package br.exitus.api.domain.user;
 import br.exitus.api.domain.earlyexit.EarlyExit;
 import br.exitus.api.domain.register.Register;
 import br.exitus.api.domain.role.Role;
+import br.exitus.api.domain.user.dto.SignupRequestDTO;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -73,6 +74,15 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "guarded", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<EarlyExit> earlyExits = new HashSet<>();
+
+    public User (SignupRequestDTO dto) {
+        this.email = dto.email();
+        this.name = dto.name();
+        this.enrollment = dto.enrollment();
+        this.birthDate = dto.birth();
+        this.shift = dto.shift();
+    }
+
 
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
