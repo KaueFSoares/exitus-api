@@ -1,0 +1,90 @@
+# User login and signup
+
+# Base URL: http://localhost:8080/api/auth
+
+# ! -> Required
+# ? -> Optional
+
+
+### --- LOGIN ---
+
+# Request body:
+# {
+#    email! : string
+#    password! : string
+# }
+
+# Response codes:
+
+# - 200: Success - User logged in
+# - 400: Bad request - Invalid request body
+# - 401: Unauthorized - Invalid credentials
+# - 403: Forbidden - User is not active
+# - 404: Not found - User not found
+
+# Response body:
+# {
+#    token: string
+# }
+
+
+POST http://localhost:8080/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "password": "admin"
+}
+
+### --- SIGNUP ---
+
+
+# Request header:
+# Authorization: Bearer <token>
+
+# Request body:
+# {
+#    email! : string
+#    password! : string
+#    name! : string
+#    role! : "ADMIN" | "GUARDIAN" | "GUARDED" | "EMPLOYEE"
+#    birth? : date (aaaa-mm-dd)
+#    shift? : "MORNING" | "AFTERNOON" | "NIGHT"
+#    enrollment? : string
+# }
+
+# Response codes:
+
+# - 200: Success - User signed up
+# - 400: Bad request - Invalid request body
+# - 409: Conflict - User already exists
+# - 401: Unauthorized - Invalid credentials
+
+# Response body:
+# {
+#    email : string
+#    password : string
+#    name : string
+#    role : "ADMIN" | "GUARDIAN" | "GUARDED" | "EMPLOYEE"
+#    birth : date (aaaa-mm-dd)
+#    shift : "MORNING" | "AFTERNOON" | "NIGHT"
+#    enrollment : string
+# }
+
+POST http://localhost:8080/api/auth/signup
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJFeGl0dXNBUEkiLCJzdWIiOiJhZG1pbkBhZG1pbi5jb20iLCJleHAiOjE2OTQ4MzY1MTZ9.h_yvRYp-ynqGz3QYGQ4hFGcOFyjKejwKjjWfZ7ysszE
+
+{
+  "email": "test@test.com",
+  "password": "test",
+  "name": "Test",
+  "role": "GUARDED",
+  "birth": "1999-01-01",
+  "shift": "MORNING",
+  "enrollment": "123456"
+}
+
+
