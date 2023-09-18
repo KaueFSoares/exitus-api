@@ -7,6 +7,7 @@ import br.exitus.api.domain.user.dto.LoginResponseDTO;
 import br.exitus.api.domain.user.dto.SignupRequestDTO;
 import br.exitus.api.domain.user.dto.SignupResponseDTO;
 import br.exitus.api.domain.user.validation.UserValidationService;
+import br.exitus.api.infra.exception.InactiveAccountException;
 import br.exitus.api.infra.exception.NotFoundException;
 import br.exitus.api.repository.RoleRepository;
 import br.exitus.api.repository.UserRepository;
@@ -58,7 +59,9 @@ public class AuthController {
     @PostMapping(RouteVAR.LOGIN)
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO dto) {
 
-        if (!userRepository.existsByEmail(dto.email())) throw new NotFoundException("User not found.");
+        var user = userRepository.findByEmail(dto.email()).orElseThrow(() -> new NotFoundException("User not found."));
+
+        if (!user.getActive()) throw new InactiveAccountException("Inactive account.");
 
         var token = new UsernamePasswordAuthenticationToken(dto.email(), dto.password());
 

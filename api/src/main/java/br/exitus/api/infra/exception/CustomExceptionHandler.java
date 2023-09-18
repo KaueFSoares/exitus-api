@@ -45,6 +45,11 @@ public class CustomExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
     }
 
+    @ExceptionHandler(InactiveAccountException.class)
+    public ResponseEntity<String> handleInactiveAccountException(InactiveAccountException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
