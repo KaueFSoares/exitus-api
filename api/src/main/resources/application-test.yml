@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost/exitus_test
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
