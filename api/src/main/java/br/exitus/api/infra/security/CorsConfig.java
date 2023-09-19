@@ -1,5 +1,6 @@
 package br.exitus.api.infra.security;
 
+import br.exitus.api.constant.variable.RouteVAR;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -14,7 +15,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT")
-                        .allowedOrigins("http://localhost:5173");
+                        .allowedOrigins(RouteVAR.FRONTEND);
             }
         };
     }
