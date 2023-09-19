@@ -12,6 +12,7 @@ public class AuthMessages {
     public static final String INVALID_EMAIL = "Invalid email.";
     public static final String NULL_ROLE = "Role cannot be null.";
     public static final String EMPTY_NAME = "Name cannot be empty.";
+    public static final String REFRESH_TOKEN_REQUIRED = "Refresh token cannot be empty.";
 
 
     //Auth related error messages

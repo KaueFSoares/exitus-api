@@ -2,10 +2,7 @@ package br.exitus.api.controller;
 
 import br.exitus.api.constant.variable.RouteVAR;
 import br.exitus.api.domain.user.User;
-import br.exitus.api.domain.user.dto.LoginRequestDTO;
-import br.exitus.api.domain.user.dto.LoginResponseDTO;
-import br.exitus.api.domain.user.dto.SignupRequestDTO;
-import br.exitus.api.domain.user.dto.SignupResponseDTO;
+import br.exitus.api.domain.user.dto.*;
 import br.exitus.api.domain.user.validation.UserValidationService;
 import br.exitus.api.infra.exception.InactiveAccountException;
 import br.exitus.api.infra.exception.NotFoundException;
@@ -67,10 +64,23 @@ public class AuthController {
 
         var authentication = authenticationManager.authenticate(token);
 
-        var JWT= tokenService.generateToken(authentication);
+        var data = tokenService.generateToken(authentication);
 
-        return ResponseEntity.ok(new LoginResponseDTO(JWT));
+        return ResponseEntity.ok(data);
 
+    }
+
+    @PostMapping(RouteVAR.REFRESH)
+    public ResponseEntity<LoginResponseDTO> refreshToken(@RequestBody @Valid RefreshTokenRequestDTO dto) {
+
+        var token = dto.refresh_token().replace("Bearer ", "");
+
+        var subject = tokenService.validateToken(token);
+        var user = userRepository.findByEmail(subject);
+
+        var data = tokenService.generateToken(user.orElseThrow(() -> new NotFoundException("User not found.")));
+
+        return ResponseEntity.ok(data);
     }
 
     @Transactional
