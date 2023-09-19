@@ -1,0 +1,31 @@
+_id: req_7b473736b41f4d419a7c792e1fa7c5cf
+type: Request
+parentId: wrk_657b9c81ccab490d9b81af04b8c52bbb
+modified: 1695152126615
+created: 1695152052993
+url: http://localhost:8080/api/auth/login
+name: Login as admin
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+    	"email": "admin@admin.com",
+    	"password": "admin"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+  - name: User-Agent
+    value: insomnia/2023.5.8
+authentication: {}
+metaSortKey: -1695152052993
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
