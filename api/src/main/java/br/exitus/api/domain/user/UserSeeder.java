@@ -28,9 +28,20 @@ public class UserSeeder {
     public void seed() {
         if (userRepository.count() == 0) {
 
-            for (var role : RoleEnum.values()) {
-                userRepository.save(createUser(role));
-            }
+//            for (var role : RoleEnum.values()) {
+//                userRepository.save(createUser(role));
+//            }
+            var admin = createUser(RoleEnum.ADMIN);
+            var employee = createUser(RoleEnum.EMPLOYEE);
+            var guardian = createUser(RoleEnum.GUARDIAN);
+            var guarded = createUser(RoleEnum.GUARDED);
+
+            guardian.getGuardeds().add(guarded);
+
+            userRepository.save(admin);
+            userRepository.save(employee);
+            userRepository.save(guardian);
+            userRepository.save(guarded);
 
             System.out.println("-----UserSeeder: users created-----");
 
