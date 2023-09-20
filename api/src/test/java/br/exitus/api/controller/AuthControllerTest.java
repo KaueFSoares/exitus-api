@@ -59,14 +59,6 @@ class AuthControllerTest {
         this.loginRequestDTO = loginRequestDTO;
     }
 
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
-
     private MockHttpServletResponse getResponse(String jsonContent) throws Exception {
         return mockMvc.perform(
                 post(RouteVAR.FULL_LOGIN)
