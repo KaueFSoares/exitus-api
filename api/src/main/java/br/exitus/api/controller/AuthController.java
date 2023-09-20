@@ -4,10 +4,12 @@ import br.exitus.api.constant.variable.RouteVAR;
 import br.exitus.api.domain.user.User;
 import br.exitus.api.domain.user.dto.*;
 import br.exitus.api.domain.user.validation.UserValidationService;
+import br.exitus.api.infra.exception.AuthException;
 import br.exitus.api.infra.exception.InactiveAccountException;
 import br.exitus.api.infra.exception.NotFoundException;
 import br.exitus.api.repository.RoleRepository;
 import br.exitus.api.repository.UserRepository;
+import br.exitus.api.service.AuthService;
 import br.exitus.api.service.TokenService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +37,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
+    private final AuthService authService;
 
     @Autowired
     public AuthController(
@@ -42,7 +46,8 @@ public class AuthController {
             UserValidationService userValidationService,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            TokenService tokenService
+            TokenService tokenService,
+            AuthService authService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -50,6 +55,7 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenService = tokenService;
+        this.authService = authService;
     }
 
 
@@ -87,20 +93,25 @@ public class AuthController {
     @PostMapping(RouteVAR.SIGNUP)
     public ResponseEntity<SignupResponseDTO> signup(@RequestBody @Valid SignupRequestDTO dto, UriComponentsBuilder uriComponentsBuilder) {
 
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!authService.isAdmin(user)) throw new AuthException("You don't have permission to create a user.");
+
         userValidationService.validate(dto);
 
-        var user = new User(dto);
+        var newUser = new User(dto);
 
-        user.setPassword(passwordEncoder.encode(dto.password()));
+
+        newUser.setPassword(passwordEncoder.encode(dto.password()));
 
         var role = roleRepository.findByName(dto.role());
-        user.setRoles(Set.of(role));
+        newUser.setRoles(Set.of(role));
 
-        userRepository.save(user);
+        userRepository.save(newUser);
 
-        var uri = uriComponentsBuilder.path("/api/users/{id}").buildAndExpand(user.getId()).toUri();
+        var uri = uriComponentsBuilder.path("/api/users/{id}").buildAndExpand(newUser.getId()).toUri();
 
-        return ResponseEntity.created(uri).body(new SignupResponseDTO(user));
+        return ResponseEntity.created(uri).body(new SignupResponseDTO(newUser));
 
     }
 

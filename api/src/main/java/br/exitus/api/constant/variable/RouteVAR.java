@@ -1,5 +1,7 @@
 package br.exitus.api.constant.variable;
 
+import java.net.URI;
+
 public class RouteVAR {
 
     public static final String FRONTEND = "http://localhost:5173";
@@ -14,6 +16,7 @@ public class RouteVAR {
 
     public static final String FULL_REFRESH = AUTH + REFRESH;
     public static final String FULL_LOGIN = AUTH + LOGIN;
+    public static final String FULL_SIGNUP = AUTH + SIGNUP;
 
     // UserController
     public static final String USER = API + "/user";
