@@ -5,9 +5,11 @@ import br.exitus.api.domain.role.RoleEnum;
 import br.exitus.api.domain.user.Shift;
 import br.exitus.api.domain.user.User;
 import br.exitus.api.domain.user.dto.LoginRequestDTO;
+import br.exitus.api.domain.user.dto.RefreshTokenRequestDTO;
 import br.exitus.api.domain.user.dto.SignupRequestDTO;
 import br.exitus.api.repository.RoleRepository;
 import br.exitus.api.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +28,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -43,6 +46,7 @@ class AuthControllerTest {
     private final MockMvc mockMvc;
     private final PasswordEncoder passwordEncoder;
     private final JacksonTester<LoginRequestDTO> loginRequestDTO;
+    private final JacksonTester<RefreshTokenRequestDTO> refreshTokenRequestDTO;
 
     @Autowired
     AuthControllerTest(
@@ -50,13 +54,15 @@ class AuthControllerTest {
             UserRepository userRepository,
             MockMvc mockMvc,
             PasswordEncoder passwordEncoder,
-            JacksonTester<LoginRequestDTO> loginRequestDTO
+            JacksonTester<LoginRequestDTO> loginRequestDTO,
+            JacksonTester<RefreshTokenRequestDTO> refreshTokenRequestDTO
     ) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.mockMvc = mockMvc;
         this.passwordEncoder = passwordEncoder;
         this.loginRequestDTO = loginRequestDTO;
+        this.refreshTokenRequestDTO = refreshTokenRequestDTO;
     }
 
     private MockHttpServletResponse getResponse(String jsonContent) throws Exception {
@@ -185,5 +191,68 @@ class AuthControllerTest {
         MockHttpServletResponse response = getResponse(jsonContent);
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
+    }
+
+    @Test
+    @DisplayName("Must return 200 when refresh token with valid refresh token")
+    void refreshToken1() throws Exception {
+
+        var jsonContent = refreshTokenRequestDTO.write(
+                new RefreshTokenRequestDTO(
+                        "Bearer " + getToken(RoleEnum.ADMIN)
+                )
+        ).getJson();
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_REFRESH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Test
+    @DisplayName("Must return 400 when refresh token with invalid refresh token")
+    void refreshToken2() throws Exception {
+
+        var jsonContent = refreshTokenRequestDTO.write(
+                new RefreshTokenRequestDTO(
+                        "Bearer " + getToken(RoleEnum.ADMIN) + "trash"
+                )
+        ).getJson();
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_REFRESH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+    }
+
+    private String getToken(RoleEnum role) throws Exception {
+        var jsonContent = loginRequestDTO.write(
+                new LoginRequestDTO(
+                        role.name().toLowerCase() + "@" + role.name().toLowerCase() + ".com",
+                        role.name().toLowerCase()
+                )
+        ).getJson();
+
+        var response = mockMvc.perform(
+                post(RouteVAR.FULL_LOGIN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            return mapper.readTree(response.getContentAsString()).get("refresh_token").asText();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "";
     }
 }
