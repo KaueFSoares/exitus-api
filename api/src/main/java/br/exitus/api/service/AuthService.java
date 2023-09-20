@@ -39,4 +39,12 @@ public class AuthService {
         return roles.contains(adminRole);
     }
 
+    public Boolean isGuardian(User user) {
+        var roles = user.getRoles();
+
+        var guardianRole = roleService.getRoleByEnum(RoleEnum.GUARDIAN);
+
+        return roles.contains(guardianRole);
+    }
+
 }

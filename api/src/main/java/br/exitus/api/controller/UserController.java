@@ -2,6 +2,7 @@ package br.exitus.api.controller;
 
 import br.exitus.api.constant.variable.RouteVAR;
 import br.exitus.api.domain.user.dto.CodeResponseDTO;
+import br.exitus.api.domain.user.dto.PersonalDataResponseDTO;
 import br.exitus.api.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,11 @@ public class UserController {
     @GetMapping(RouteVAR.UPDATE_CODE)
     public ResponseEntity<CodeResponseDTO> refreshCode() {
         return ResponseEntity.ok(userService.refreshCode());
+    }
+
+    @GetMapping(RouteVAR.PERSONAL_DATA)
+    public ResponseEntity<PersonalDataResponseDTO> personalData() {
+        return ResponseEntity.ok(userService.personalData());
     }
 
 }

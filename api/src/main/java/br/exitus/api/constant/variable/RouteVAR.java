@@ -22,4 +22,5 @@ public class RouteVAR {
     public static final String USER = API + "/user";
     public static final String CODE = "/code";
     public static final String UPDATE_CODE = "/update-code";
+    public static final String PERSONAL_DATA = "personal-data";
 }

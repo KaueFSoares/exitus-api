@@ -62,7 +62,7 @@ public class User implements UserDetails {
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "guardian_guarded",
-            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            joinColumns = @JoinColumn(name = "guardian_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "guarded_id", referencedColumnName = "id"))
     private Set<User> guardeds = new HashSet<>();
 
