@@ -4,6 +4,7 @@ import br.exitus.api.constant.variable.RouteVAR;
 import br.exitus.api.domain.role.RoleEnum;
 import br.exitus.api.domain.user.Shift;
 import br.exitus.api.domain.user.User;
+import br.exitus.api.domain.user.UserSeeder;
 import br.exitus.api.domain.user.dto.LoginRequestDTO;
 import br.exitus.api.domain.user.dto.RefreshTokenRequestDTO;
 import br.exitus.api.domain.user.dto.SignupRequestDTO;
@@ -11,10 +12,7 @@ import br.exitus.api.repository.RoleRepository;
 import br.exitus.api.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -47,6 +45,9 @@ class AuthControllerTest {
     private final PasswordEncoder passwordEncoder;
     private final JacksonTester<LoginRequestDTO> loginRequestDTO;
     private final JacksonTester<RefreshTokenRequestDTO> refreshTokenRequestDTO;
+    private final JacksonTester<SignupRequestDTO> signupRequestDTO;
+    private final UserSeeder userSeeder;
+
 
     @Autowired
     AuthControllerTest(
@@ -55,7 +56,9 @@ class AuthControllerTest {
             MockMvc mockMvc,
             PasswordEncoder passwordEncoder,
             JacksonTester<LoginRequestDTO> loginRequestDTO,
-            JacksonTester<RefreshTokenRequestDTO> refreshTokenRequestDTO
+            JacksonTester<RefreshTokenRequestDTO> refreshTokenRequestDTO,
+            JacksonTester<SignupRequestDTO> signupRequestDTO,
+            UserSeeder userSeeder
     ) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
@@ -63,6 +66,14 @@ class AuthControllerTest {
         this.passwordEncoder = passwordEncoder;
         this.loginRequestDTO = loginRequestDTO;
         this.refreshTokenRequestDTO = refreshTokenRequestDTO;
+        this.userSeeder = userSeeder;
+        this.signupRequestDTO = signupRequestDTO;
+    }
+
+    @AfterEach
+    void tearDown() {
+        userRepository.deleteAll();
+        userSeeder.seed();
     }
 
     private MockHttpServletResponse getResponse(String jsonContent) throws Exception {
@@ -87,6 +98,25 @@ class AuthControllerTest {
         var user = new User(dto);
 
         user.setActive(false);
+        user.setRoles(Set.of(roleRepository.findByName(dto.role())));
+        user.setPassword(passwordEncoder.encode(dto.password()));
+
+        return user;
+    }
+
+    private User createTestUser() {
+        var dto = new SignupRequestDTO(
+                "test@test.com",
+                "test",
+                RoleEnum.GUARDED,
+                "test",
+                "test",
+                LocalDate.now(),
+                Shift.MORNING
+        );
+
+        var user = new User(dto);
+
         user.setRoles(Set.of(roleRepository.findByName(dto.role())));
         user.setPassword(passwordEncoder.encode(dto.password()));
 
@@ -199,7 +229,7 @@ class AuthControllerTest {
 
         var jsonContent = refreshTokenRequestDTO.write(
                 new RefreshTokenRequestDTO(
-                        "Bearer " + getToken(RoleEnum.ADMIN)
+                        "Bearer " + getRefreshToken()
                 )
         ).getJson();
 
@@ -218,7 +248,7 @@ class AuthControllerTest {
 
         var jsonContent = refreshTokenRequestDTO.write(
                 new RefreshTokenRequestDTO(
-                        "Bearer " + getToken(RoleEnum.ADMIN) + "trash"
+                        "Bearer " + getRefreshToken() + "trash"
                 )
         ).getJson();
 
@@ -231,11 +261,120 @@ class AuthControllerTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 
-    private String getToken(RoleEnum role) throws Exception {
+    @Test
+    @DisplayName("Must return 201 when signup with valid credentials")
+    public void signup1() throws Exception {
+
+        var jsonContent = getJsonContent("test@test.com", "test", "test");
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_SIGNUP)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + getAccessToken(RoleEnum.ADMIN))
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.CREATED.value());
+    }
+
+    @Test
+    @DisplayName("Must return 400 when signup with invalid email")
+    public void signup2() throws Exception {
+
+        var jsonContent = getJsonContent("test", "test", "test");
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_SIGNUP)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + getAccessToken(RoleEnum.ADMIN))
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    @DisplayName("Must return 400 when signup with invalid password")
+    public void signup3() throws Exception {
+
+        var jsonContent = getJsonContent("test@test.com", "", "test");
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_SIGNUP)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + getAccessToken(RoleEnum.ADMIN))
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    @DisplayName("Must return 400 when signup with invalid role")
+    public void signup4() throws Exception {
+
+        var jsonContent = getJsonContent("test@test.com", "test", "test").replace("GUARDED", "GUARDED1");
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_SIGNUP)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + getAccessToken(RoleEnum.ADMIN))
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    @DisplayName("Must return 400 when signup with invalid name")
+    public void signup5() throws Exception {
+
+        var jsonContent = getJsonContent("test@test.com", "test", "");
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_SIGNUP)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + getAccessToken(RoleEnum.ADMIN))
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    @DisplayName("Must return 400 when signup with invalid shift")
+    public void signup6() throws Exception {
+
+        var jsonContent = getJsonContent("test@test.com", "test", "test").replace("MORNING", "MORNING1");
+
+        MockHttpServletResponse response = mockMvc.perform(
+                post(RouteVAR.FULL_SIGNUP)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + getAccessToken(RoleEnum.ADMIN))
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    private String getJsonContent(String mail, String password, String name) throws IOException {
+        return signupRequestDTO.write(
+                new SignupRequestDTO(
+                        mail,
+                        password,
+                        RoleEnum.GUARDED,
+                        name,
+                        "test",
+                        LocalDate.now(),
+                        Shift.MORNING
+                )
+        ).getJson();
+    }
+    private String getRefreshToken() throws Exception {
         var jsonContent = loginRequestDTO.write(
                 new LoginRequestDTO(
-                        role.name().toLowerCase() + "@" + role.name().toLowerCase() + ".com",
-                        role.name().toLowerCase()
+                        RoleEnum.ADMIN.name().toLowerCase() + "@" + RoleEnum.ADMIN.name().toLowerCase() + ".com",
+                        RoleEnum.ADMIN.name().toLowerCase()
                 )
         ).getJson();
 
@@ -255,4 +394,29 @@ class AuthControllerTest {
 
         return "";
     }
+    private String getAccessToken(RoleEnum role) throws Exception {
+        var jsonContent = loginRequestDTO.write(
+                new LoginRequestDTO(
+                        role.name().toLowerCase() + "@" + role.name().toLowerCase() + ".com",
+                        role.name().toLowerCase()
+                )
+        ).getJson();
+
+        var response = mockMvc.perform(
+                post(RouteVAR.FULL_LOGIN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonContent)
+        ).andReturn().getResponse();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            return mapper.readTree(response.getContentAsString()).get("access_token").asText();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
 }
