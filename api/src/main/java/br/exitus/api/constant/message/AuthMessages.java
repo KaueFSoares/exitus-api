@@ -18,4 +18,5 @@ public class AuthMessages {
     //Auth related error messages
     public static final String TOKEN_GENERATION_ERROR = "Error on generating token.";
     public static final String TOKEN_VALIDATION_ERROR = "Error on validating token.";
+    public static final String ERROR_PARSING_REQUEST_BODY = "Error on parsing request body. Have a look at ";
 }
